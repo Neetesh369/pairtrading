@@ -4,7 +4,7 @@ import numpy as np
 import yfinance as yf
 import streamlit as st
 # Read lot sizes and margin required from CSV file
-lot_size_df = pd.read_csv('D:/pairtrading/new_tests/lot_sizes.csv')
+lot_size_df = pd.read_csv('./lot_sizes.csv')
 # Input values from Streamlit UI
 stockA = st.text_input('Enter Stock A symbol (e.g., HDFC.NS):')
 # lotA = st.number_input('Enter lot size for this stock:')
