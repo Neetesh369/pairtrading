@@ -98,6 +98,7 @@ for i, b in enumerate(df.iterrows()):
         result_dfs.append(df.iloc[entry_index:exit_index+1])
         trade_metrics.append({
             'Trade': len(result_dfs),
+            'Total Profit': df.iloc[entry_index:exit_index+1]['pnl'].sum(),
             'Maximum Loss': df.iloc[entry_index:exit_index+1]['pnl'].min(),
             'Maximum Profit': df.iloc[entry_index:exit_index+1]['pnl'].max(),
             'Average Loss': df.iloc[entry_index:exit_index+1]['pnl'].where(df['pnl'] < 0).mean(),
