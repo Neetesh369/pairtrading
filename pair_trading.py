@@ -3,7 +3,7 @@ import math
 import numpy as np
 import yfinance as yf
 import streamlit as st
-st.set_page_config(layout="wide")
+# st.set_page_config(layout="wide")
 
 # Read lot sizes and margin required from CSV file
 lot_size_df = pd.read_csv('./lots.csv')
@@ -128,9 +128,10 @@ for i, b in enumerate(df.iterrows()):
 # display_df = result_dfs.drop(['average','stdev','entry','exit','holding_days'], axis=1)
 # Display the result dataframes and trade metrics
 for i, result_df in enumerate(result_dfs):
-    st.subheader(f'Trade {i+1}')
-    st.write(result_df.drop(['average','stdev','entry','exit','holding_days'], axis=1))
-
-st.subheader('Trade Metrics')
-trade_metrics_df = pd.DataFrame(trade_metrics)
-st.write(trade_metrics_df)
+    with st.container():
+        st.subheader(f'Trade {i+1}')
+        st.write(result_df.drop(['average','stdev','entry','exit','holding_days'], axis=1))
+with st.container():
+    st.subheader('Trade Metrics')
+    trade_metrics_df = pd.DataFrame(trade_metrics)
+    st.write(trade_metrics_df)
