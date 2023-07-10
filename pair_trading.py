@@ -127,11 +127,15 @@ for i, b in enumerate(df.iterrows()):
         df.loc[df.index[i], ['Total_%']] = round(total_return,2)
 # display_df = result_dfs.drop(['average','stdev','entry','exit','holding_days'], axis=1)
 # Display the result dataframes and trade metrics
-for i, result_df in enumerate(result_dfs):
-    with st.container():
-        st.subheader(f'Trade {i+1}')
-        st.write(result_df.drop(['average','stdev','entry','exit','holding_days'], axis=1))
+
 with st.container():
     st.subheader('Trade Metrics')
     trade_metrics_df = pd.DataFrame(trade_metrics)
     st.write(trade_metrics_df)
+
+    # Display the result dataframes and trade metrics
+
+for i, result_df in enumerate(result_dfs):
+    with st.container():
+        st.subheader(f'Trade {i+1}')
+        st.write(result_df.drop(['average','stdev','entry','exit','holding_days'], axis=1))
