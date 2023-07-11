@@ -53,7 +53,7 @@ df['Total_%'] = 0
 result_dfs = []
 trade_metrics = []
 
-def calculate(entry_index, current_index, entry_zscore,lotA,lotB,margin_required):
+def calculate(entry_index, current_index, entry_zscore,margin_required):
     capitalA = margin_requiredA
     capitalB = margin_requiredB
     capital = margin_required
@@ -102,7 +102,7 @@ for i, b in enumerate(df.iterrows()):
         exit_date = df.index[i]
         days_between = (exit_index - entry_index)
         df.loc[exit_date, 'holding_days'] = days_between
-        apnl, bpnl, pnl, stockA_return, stockB_return,total_return = calculate(entry_index, i, zscore,lotA,lotB,margin_required)
+        apnl, bpnl, pnl, stockA_return, stockB_return,total_return = calculate(entry_index, i, zscore,margin_required)
         df.loc[df.index[i], ['ApnL']], df.loc[df.index[i], ['BpnL']] = apnl, bpnl
         df.loc[df.index[i], ['pnl']] = pnl
         df.loc[df.index[i], ['StockA_return']] = round(stockA_return,2)
@@ -121,7 +121,7 @@ for i, b in enumerate(df.iterrows()):
             'Holding Days': days_between
         })
     if hold == 1:
-        apnl, bpnl, pnl, stockA_return, stockB_return, total_return= calculate(entry_index, i, zscore,lotA,lotB,margin_required)
+        apnl, bpnl, pnl, stockA_return, stockB_return, total_return= calculate(entry_index, i, zscore,margin_required)
         df.loc[df.index[i], ['ApnL']], df.loc[df.index[i], ['BpnL']] = apnl, bpnl
         df.loc[df.index[i], ['pnl']] = pnl
         df.loc[df.index[i], ['StockA_return']] = round(stockA_return,2)
