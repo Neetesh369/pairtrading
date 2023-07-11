@@ -22,13 +22,16 @@ window_size = st.select_slider('Select Window Size:', options=[60, 100, 250])
 entry_zscore = st.slider('Entry Z-Score', min_value=-5.0, max_value=5.0, value=2.0, step=0.1)
 exit_zscore = st.slider('Exit Z-Score', min_value=-5.0, max_value=5.0, value=0.4, step=0.1)
 # margin_required = st.number_input('Enter Margin required for this trade:')
-lotA = lot_size_df.loc[lot_size_df['SYMBOL'] == stockA, 'LOT'].values[0]
-lotB = lot_size_df.loc[lot_size_df['SYMBOL'] == stockB, 'LOT'].values[0]
-margin_requiredA = lot_size_df.loc[lot_size_df['SYMBOL'] == stockA, 'Margin'].values[0]
-margin_requiredB = lot_size_df.loc[lot_size_df['SYMBOL'] == stockB, 'Margin'].values[0]
+# lotA = lot_size_df.loc[lot_size_df['SYMBOL'] == stockA, 'LOT'].values[0]
+# lotB = lot_size_df.loc[lot_size_df['SYMBOL'] == stockB, 'LOT'].values[0]
+# margin_requiredA = lot_size_df.loc[lot_size_df['SYMBOL'] == stockA, 'Margin'].values[0]
+# margin_requiredB = lot_size_df.loc[lot_size_df['SYMBOL'] == stockB, 'Margin'].values[0]
+# margin_required = margin_requiredA+margin_requiredB
+margin_requiredA=500000
+margin_requiredB=500000
 margin_required = margin_requiredA+margin_requiredB
-st.write('Lot Size for Stock A:', lotA)
-st.write('Lot Size for Stock B:', lotB)
+# st.write('Lot Size for Stock A:', lotA)
+# st.write('Lot Size for Stock B:', lotB)
 st.write('Marzin Required:', margin_required)
 
 # Download stock data
@@ -59,9 +62,10 @@ def calculate(entry_index, current_index, entry_zscore,lotA,lotB,margin_required
     entryB = df.iloc[entry_index]['stockB']
     currentA = df.iloc[current_index]['stockA']
     currentB = df.iloc[current_index]['stockB']
-    qtyA = lotA
-    qtyB = lotB
-
+    qtyA = margin_requiredA//entryA
+    qtyB = margin_requiredB//entryB
+    st.write('Lot Size for Stock A:', qtyA)
+    st.write('Lot Size for Stock B:', qtyB)
     if entry_zscore == 2:
         apnl = round((entryA - currentA) * qtyA, 2)
         bpnl = round((currentB - entryB) * qtyB, 2)
