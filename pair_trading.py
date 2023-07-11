@@ -64,8 +64,6 @@ def calculate(entry_index, current_index, entry_zscore,lotA,lotB,margin_required
     currentB = df.iloc[current_index]['stockB']
     qtyA = margin_requiredA//entryA
     qtyB = margin_requiredB//entryB
-    st.write('Lot Size for Stock A:', qtyA)
-    st.write('Lot Size for Stock B:', qtyB)
     if entry_zscore == 2:
         apnl = round((entryA - currentA) * qtyA, 2)
         bpnl = round((currentB - entryB) * qtyB, 2)
