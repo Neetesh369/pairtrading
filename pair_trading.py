@@ -82,7 +82,7 @@ def calculate(entry_index, current_index, entry_zscore,margin_required):
         daily_return_A = round((apnl / capitalA) * 100,2)
         daily_return_B = round((bpnl / capitalB) * 100,2)
         total_return = round((pnl/capital)*100,2)
-    return apnl, bpnl, pnl, daily_return_A, daily_return_B, total_return
+    return apnl, bpnl, pnl, daily_return_A, daily_return_B, total_return,qtyA,qtyB
 
 hold = 0
 df['pnl'] = 0
@@ -102,7 +102,7 @@ for i, b in enumerate(df.iterrows()):
         exit_date = df.index[i]
         days_between = (exit_index - entry_index)
         df.loc[exit_date, 'holding_days'] = days_between
-        apnl, bpnl, pnl, stockA_return, stockB_return,total_return = calculate(entry_index, i, zscore,margin_required)
+        apnl, bpnl, pnl, stockA_return, stockB_return,total_return,qtyA,qtyB= calculate(entry_index, i, zscore,margin_required)
         df.loc[df.index[i], ['ApnL']], df.loc[df.index[i], ['BpnL']] = apnl, bpnl
         df.loc[df.index[i], ['pnl']] = pnl
         df.loc[df.index[i], ['StockA_return']] = round(stockA_return,2)
@@ -118,10 +118,12 @@ for i, b in enumerate(df.iterrows()):
             'Maximum Profit': df.iloc[entry_index:exit_index+1]['pnl'].max(),
             'Average Loss': df.iloc[entry_index:exit_index+1]['pnl'].where(df['pnl'] < 0).mean(),
             'Average Profit': df.iloc[entry_index:exit_index+1]['pnl'].where(df['pnl'] > 0).mean(),
-            'Holding Days': days_between
+            'Holding Days': days_between,
+            'Quantity A': qtyA,
+            'Quantity B': qtyB,
         })
     if hold == 1:
-        apnl, bpnl, pnl, stockA_return, stockB_return, total_return= calculate(entry_index, i, zscore,margin_required)
+        apnl, bpnl, pnl, stockA_return, stockB_return, total_return,qtyA,qtyB= calculate(entry_index, i, zscore,margin_required)
         df.loc[df.index[i], ['ApnL']], df.loc[df.index[i], ['BpnL']] = apnl, bpnl
         df.loc[df.index[i], ['pnl']] = pnl
         df.loc[df.index[i], ['StockA_return']] = round(stockA_return,2)
