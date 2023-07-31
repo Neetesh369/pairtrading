@@ -3,7 +3,7 @@ import math
 import numpy as np
 import yfinance as yf
 import streamlit as st
-# st.set_page_config(layout="wide")
+st.set_page_config(layout="wide")
 
 # Read lot sizes and margin required from CSV file
 lot_size_df = pd.read_csv('./lots.csv')
