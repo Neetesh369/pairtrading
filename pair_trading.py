@@ -29,7 +29,7 @@ exit_zscore = st.slider('Exit Z-Score', min_value=-5.0, max_value=5.0, value=0.4
 # margin_required = margin_requiredA+margin_requiredB
 margin_requiredA=500000
 margin_requiredB=500000
-margin_required = margin_requiredA+margin_requiredB
+margin_required = 500000
 # st.write('Lot Size for Stock A:', lotA)
 # st.write('Lot Size for Stock B:', lotB)
 st.write('Marzin Required:', margin_required)
@@ -54,9 +54,9 @@ result_dfs = []
 trade_metrics = []
 
 def calculate(entry_index, current_index, entry_zscore,margin_required):
-    capitalA = margin_requiredA
-    capitalB = margin_requiredB
-    capital = margin_required
+    capitalA = capitalB = capital = margin_required
+    # capitalB = margin_requiredB
+    # capital = margin_required
 
     entryA = df.iloc[entry_index]['stockA']
     entryB = df.iloc[entry_index]['stockB']
@@ -92,6 +92,7 @@ for i, b in enumerate(df.iterrows()):
     if hold == 0 and b[1]['entry'] == 1:
         total_trades += 1
         entry_index = i
+        entry_date = df.index[i].date()  # Add entry date
         hold = 1
         if df.iloc[entry_index]['Zscore'] >= 2:
             zscore = 2
@@ -110,17 +111,26 @@ for i, b in enumerate(df.iterrows()):
         df.loc[df.index[i], ['Total_%']] = round(total_return,2)
         hold = 0
         result_dfs.append(df.iloc[entry_index:exit_index+1])
+        total_profit = "{:.2f}".format(float(apnl) + float(bpnl))
+        total_profit_percentage = "{:.2f}".format(((apnl + bpnl)/margin_required)*100)
+        avg_loss_percentage = round(df.iloc[entry_index:exit_index + 1]['pnl'].where(df['pnl'] < 0).mean() / float(margin_required) * 100, 2)
+        avg_profit_percentage = round(df.iloc[entry_index:exit_index + 1]['pnl'].where(df['pnl'] > 0).mean() / float(margin_required) * 100, 2)
+        max_loss_percantage = round(df.iloc[entry_index:exit_index+1]['pnl'].min()/float(margin_required) * 100, 2,),
+        maxl_profit_percantage =round(df.iloc[entry_index:exit_index+1]['pnl'].max()/float(margin_required) * 100, 2,),
         trade_metrics.append({
-            'Trade': len(result_dfs),
-            'Total Profit': df.iloc[entry_index:exit_index+1]['pnl'].sum(),
-            'Total Profit_%': round((df.iloc[entry_index:exit_index+1]['pnl'].sum()/margin_required)*100,2),
-            'Maximum Loss': df.iloc[entry_index:exit_index+1]['pnl'].min(),
-            'Maximum Profit': df.iloc[entry_index:exit_index+1]['pnl'].max(),
+            'Trade': len(trade_metrics) + 1,
+            'Entry Date': entry_date,  # Add entry date
+            'Holding Days': days_between,
+            'Total Profit': total_profit,
+            'Total Profit_%': total_profit_percentage,
+            'Average Loss_%': avg_loss_percentage,
+            'Average Profit_%': avg_profit_percentage,
+            'Max Loss_%':max_loss_percantage,
+            'Max Profit_%':maxl_profit_percantage,
             'Average Loss': df.iloc[entry_index:exit_index+1]['pnl'].where(df['pnl'] < 0).mean(),
             'Average Profit': df.iloc[entry_index:exit_index+1]['pnl'].where(df['pnl'] > 0).mean(),
-            'Holding Days': days_between,
-            'Quantity A': qtyA,
-            'Quantity B': qtyB,
+            'Maximum Loss': df.iloc[entry_index:exit_index+1]['pnl'].min(),
+            'Maximum Profit': df.iloc[entry_index:exit_index+1]['pnl'].max(),
         })
     if hold == 1:
         apnl, bpnl, pnl, stockA_return, stockB_return, total_return,qtyA,qtyB= calculate(entry_index, i, zscore,margin_required)
@@ -134,7 +144,7 @@ for i, b in enumerate(df.iterrows()):
 
 with st.container():
     st.subheader('Trade Metrics')
-    trade_metrics_df = pd.DataFrame(trade_metrics)
+    trade_metrics_df = pd.DataFrame(trade_metrics).set_index('Trade')
     st.write(trade_metrics_df)
 
     # Display the result dataframes and trade metrics
