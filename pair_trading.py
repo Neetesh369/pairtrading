@@ -49,6 +49,23 @@ df['ApnL'] = 0
 df['BpnL'] = 0
 df['Total_%'] = 0
 
+
+tolerance = 0.5
+
+# Calculate the maximum Z-score and its count, including values within the tolerance range
+max_zscore = df['Zscore'].max()
+max_negative_zscore = df['Zscore'].min()
+
+max_zscore_count_positive = df[(df['Zscore'] >= max_zscore - tolerance) & (df['Zscore'] <= max_zscore + tolerance)].shape[0]
+max_negative_zscore_count = df[(df['Zscore'] >= max_negative_zscore - tolerance) & (df['Zscore'] <= max_negative_zscore + tolerance)].shape[0]
+
+# Display the max Z-score and its count on positive and negative sides
+st.write('Maximum Z-Score:', max_zscore)
+st.write('Maximum Negative Z-Score:', max_negative_zscore)
+
+st.write('Number of times Z-Score reached close to the maximum value (Positive side):', max_zscore_count_positive)
+st.write('Number of times Z-Score reached close to the maximum negative value:', max_negative_zscore_count)
+
 # Create a list to store the dataframes and trade metrics
 result_dfs = []
 trade_metrics = []
@@ -149,7 +166,39 @@ with st.container():
 
     # Display the result dataframes and trade metrics
 
-for i, result_df in enumerate(result_dfs):
-    with st.container():
-        st.subheader(f'Trade {i+1}')
-        st.write(result_df.drop(['average','stdev','entry','exit','holding_days'], axis=1))
+
+# ... (existing code)
+
+# Filter and print trades with positive entry Z-score
+positive_entry_trades = [result_df.drop(['average', 'stdev', 'entry', 'exit', 'holding_days'], axis=1) for result_df in result_dfs if result_df.iloc[0]['Zscore'] > 0]
+
+# Print trade details for positive entry Z-score
+st.subheader('Trades with Positive Entry Z-Score')
+if not positive_entry_trades:
+    st.write('No trades with positive entry Z-Score')
+else:
+    for i, trade_df in enumerate(positive_entry_trades):
+        with st.container():
+            st.subheader(f'Trade {i+1}')
+            st.write(trade_df)
+
+# Filter and print trades with negative entry Z-score
+negative_entry_trades = [result_df.drop(['average', 'stdev', 'entry', 'exit', 'holding_days'], axis=1) for result_df in result_dfs if result_df.iloc[0]['Zscore'] < 0]
+
+# Print trade details for negative entry Z-score
+st.subheader('Trades with Negative Entry Z-Score')
+if not negative_entry_trades:
+    st.write('No trades with negative entry Z-Score')
+else:
+    for i, trade_df in enumerate(negative_entry_trades):
+        with st.container():
+            st.subheader(f'Trade {i+1}')
+            st.write(trade_df)
+
+
+
+
+# for i, result_df in enumerate(result_dfs):
+#     with st.container():
+#         st.subheader(f'Trade {i+1}')
+#         st.write(result_df.drop(['average','stdev','entry','exit','holding_days'], axis=1))
