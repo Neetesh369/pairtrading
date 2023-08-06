@@ -3,6 +3,8 @@ import math
 import numpy as np
 import yfinance as yf
 import streamlit as st
+import matplotlib.pyplot as plt
+
 st.set_page_config(layout="wide")
 
 # Read lot sizes and margin required from CSV file
@@ -43,8 +45,14 @@ data_new['average'] = data_new['ratio'].rolling(int(window_size)).mean()
 data_new['stdev'] = data_new['ratio'].rolling(int(window_size)).std()
 data_new['Zscore'] = (data_new['ratio'] - data_new['average']) / data_new['stdev']
 df = data_new.dropna()
-df['entry'] = np.where(np.abs(df['Zscore']) >= entry_zscore, 1, 0)
-df['exit'] = np.where(np.abs(df['Zscore']) <= exit_zscore, 1, 0)
+if entry_zscore > 0 :
+    df['entry'] = np.where((df['Zscore'] >= entry_zscore), 1, 0)
+    df['exit'] = np.where(df['Zscore'] <= exit_zscore, 1, 0)
+else:
+    df['entry'] = np.where((df['Zscore'] <= entry_zscore), 1, 0)
+    df['exit'] = np.where((df['Zscore']) >= exit_zscore, 1, 0)
+
+
 df['ApnL'] = 0
 df['BpnL'] = 0
 df['Total_%'] = 0
@@ -60,7 +68,7 @@ max_zscore_count_positive = df[(df['Zscore'] >= max_zscore - tolerance) & (df['Z
 max_negative_zscore_count = df[(df['Zscore'] >= max_negative_zscore - tolerance) & (df['Zscore'] <= max_negative_zscore + tolerance)].shape[0]
 
 # Display the max Z-score and its count on positive and negative sides
-st.write('Maximum Z-Score:', max_zscore)
+st.write('Maximum Positive Z-Score:', max_zscore)
 st.write('Maximum Negative Z-Score:', max_negative_zscore)
 
 st.write('Number of times Z-Score reached close to the maximum value (Positive side):', max_zscore_count_positive)
@@ -165,9 +173,24 @@ with st.container():
     st.write(trade_metrics_df)
 
     # Display the result dataframes and trade metrics
+# Plotting the 'ratio' and 'Zscore' columns
+plt.figure(figsize=(10, 6))
+plt.plot(df.index, df['Zscore'], label='Z-score', color='r')
 
+# Drawing a line for the entry Z-score
+entry_zscore_line = df[df['entry'] == 1]['Zscore']
+exit_zscore_line = df[df['exit'] == 1]['Zscore']
 
-# ... (existing code)
+plt.axhline(y=entry_zscore_line.values[0], color='g', linestyle='--', label='Entry Z-score')
+plt.axhline(y=exit_zscore_line.values[0], color='orange', linestyle='--', label='Exit Z-score')
+
+plt.xlabel('Date')
+plt.ylabel('Value')
+plt.title('Z-score with Entry Z-score')
+plt.legend()
+plt.grid(True)
+st.pyplot(plt)
+
 
 # Filter and print trades with positive entry Z-score
 positive_entry_trades = [result_df.drop(['average', 'stdev', 'entry', 'exit', 'holding_days'], axis=1) for result_df in result_dfs if result_df.iloc[0]['Zscore'] > 0]
