@@ -1,3 +1,4 @@
 yfinance
 matplotlib
 requests
+plotly
