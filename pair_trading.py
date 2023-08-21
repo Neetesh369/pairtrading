@@ -4,6 +4,8 @@ import numpy as np
 import yfinance as yf
 import streamlit as st
 import matplotlib.pyplot as plt
+from datetime import date,datetime
+import plotly.express as px
 
 st.set_page_config(layout="wide")
 
@@ -17,12 +19,21 @@ stockA = st.selectbox('Enter Stock A symbol (e.g., HDFC.NS):',stock)
 
 stockB = st.selectbox('Enter Stock B symbol (e.g., HDFCBANK.NS):',stock)
 # lotB = st.number_input('Enter lot size for this stock:')
+default_date = date(2010, 1, 1)
 
-start_date = st.date_input('Enter Start Date:')
+start_date = st.date_input('Enter Start Date:',value=default_date)
 end_date = st.date_input('Enter End Date:')
-window_size = st.select_slider('Select Window Size:', options=[60, 100, 250])
-entry_zscore = st.slider('Entry Z-Score', min_value=-5.0, max_value=5.0, value=2.0, step=0.1)
-exit_zscore = st.slider('Exit Z-Score', min_value=-5.0, max_value=5.0, value=0.4, step=0.1)
+
+default_window_size = 100  # Default value for window size select slider
+default_entry_zscore = 3.0  # Default value for entry z-score slider
+default_exit_zscore = 2.0 
+
+window_size = st.select_slider('Select Window Size:', options=[10,30,60,100,250], value=default_window_size)
+
+
+
+entry_zscore = st.slider('Entry Z-Score', min_value=-5.0, max_value=5.0, value=default_entry_zscore, step=0.1)
+exit_zscore = st.slider('Exit Z-Score', min_value=-5.0, max_value=5.0, value=default_exit_zscore, step=0.1)
 # margin_required = st.number_input('Enter Margin required for this trade:')
 # lotA = lot_size_df.loc[lot_size_df['SYMBOL'] == stockA, 'LOT'].values[0]
 # lotB = lot_size_df.loc[lot_size_df['SYMBOL'] == stockB, 'LOT'].values[0]
@@ -58,7 +69,7 @@ df['BpnL'] = 0
 df['Total_%'] = 0
 
 
-tolerance = 0.5
+tolerance = 0.1
 
 # Calculate the maximum Z-score and its count, including values within the tolerance range
 max_zscore = df['Zscore'].max()
@@ -67,12 +78,70 @@ max_negative_zscore = df['Zscore'].min()
 max_zscore_count_positive = df[(df['Zscore'] >= max_zscore - tolerance) & (df['Zscore'] <= max_zscore + tolerance)].shape[0]
 max_negative_zscore_count = df[(df['Zscore'] >= max_negative_zscore - tolerance) & (df['Zscore'] <= max_negative_zscore + tolerance)].shape[0]
 
-# Display the max Z-score and its count on positive and negative sides
-st.write('Maximum Positive Z-Score:', max_zscore)
-st.write('Maximum Negative Z-Score:', max_negative_zscore)
 
-st.write('Number of times Z-Score reached close to the maximum value (Positive side):', max_zscore_count_positive)
-st.write('Number of times Z-Score reached close to the maximum negative value:', max_negative_zscore_count)
+def zscore(data,data2,window_size):
+    data_new1 = pd.DataFrame()
+    data_new1['ratio'] = np.log10(data / data2)
+    print(data_new1['ratio'])
+    data_new1['average'] = data_new1['ratio'].rolling(int(window_size)).mean()
+    data_new1['stdev'] = data_new1['ratio'].rolling(int(window_size)).std()
+    data_new1['Zscore'] = (data_new1['ratio'] - data_new1['average']) / data_new1['stdev']
+    last_z_score = data_new1['Zscore'].iloc[-1]
+    print(last_z_score,"last")
+    return last_z_score
+
+def correlation(df1,df2):
+    corr_250d = (df1.tail(250)).corr(df2.tail(250))
+    corr_100d = (df1.tail(100)).corr(df2.tail(100))
+    corr_10d = (df1.tail(10)).corr(df2.tail(10))
+
+    return corr_250d,corr_100d,corr_10d
+
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    live_zscore_60days = zscore(data,data2,60)
+    st.write('Live Zscore 60days', live_zscore_60days)
+
+with col2:
+    live_zscore_100days = zscore(data,data2,100)
+    st.write('Live Zscore 100days', live_zscore_100days)
+
+with col3:
+    live_zscore_250days = zscore(data,data2,250)
+    st.write('Live Zscore 250days', live_zscore_250days)
+
+
+
+# Calculate correlations
+
+corr_250d, corr_100d, corr_10d = correlation(data, data2)  # Replace 'col1' and 'col2' with your column names
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.write('Correlation (250 days):', corr_250d)
+with col2:
+    st.write('Correlation (100 days):', corr_100d)
+with col3:
+    st.write('Correlation (10 days):', corr_10d)
+
+col1, col2 = st.columns(2)  # You can also use st.columns(2) in newer versions of Streamlit
+
+
+
+
+# Display the max Z-score and its count on positive and negative sides
+with col1:
+    st.write('Maximum Positive Z-Score:', max_zscore)
+    st.write('Maximum Negative Z-Score:', max_negative_zscore)
+with col2:
+    st.write('Number of times Z-Score reached close to the maximum value (Positive side):', max_zscore_count_positive)
+    st.write('Number of times Z-Score reached close to the maximum negative value:', max_negative_zscore_count)
+
+
+
+
 
 # Create a list to store the dataframes and trade metrics
 result_dfs = []
@@ -172,6 +241,56 @@ with st.container():
     trade_metrics_df = pd.DataFrame(trade_metrics).set_index('Trade')
     st.write(trade_metrics_df)
 
+
+
+# # Assuming you have two sets of data: data_new_2000 and data_new_5000
+# data_new_2000 = data_new['ratio'].tail(1250)
+# data_new_5000 = data_new['ratio'].tail(3750)
+
+# # Create a Matplotlib figure and axes
+# fig, ax1 = plt.subplots(figsize=(10, 6))
+
+# # Plot the first series (last 2000 values) on the primary y-axis
+# ax1.plot(data_new_2000.index, data_new_2000, label='Last 5years', color='blue')
+# ax1.set_xlabel('Date')
+# ax1.set_ylabel('Last 5years', color='blue')
+# ax1.tick_params(axis='y', labelcolor='blue')
+
+# # Create a secondary y-axis for the second series
+# ax2 = ax1.twinx()
+
+# # Plot the second series (last 5000 values) on the secondary y-axis
+# ax2.plot(data_new_5000.index, data_new_5000, label='Last 15years ', color='red')
+# ax2.set_ylabel('Last 15years', color='red')
+# ax2.tick_params(axis='y', labelcolor='red')
+
+# # Customize the chart
+# plt.title('Comparison of Last 5 and 15 years ')
+
+# # Display the Matplotlib chart using Streamlit
+# st.pyplot(fig)
+
+
+
+# Assuming you have two sets of data: data_new_2000 and data_new_5000
+data_new_2000 = data_new['ratio'].tail(1250)
+data_new_5000 = data_new['ratio'].tail(3750)
+
+# Create a Plotly figure
+fig = px.line(data_new_2000, x=data_new_2000.index, y='ratio', labels={'ratio': 'Last 5years Values'})
+fig.add_scatter(x=data_new_5000.index, y=data_new_5000, mode='lines', name='Last 15 years Values')
+
+# Customize the chart
+fig.update_layout(title='Comparison of Last 2000 and Last 5000 Values')
+fig.update_layout(width=1200, height=400)
+
+# Display the Plotly chart using Streamlit
+st.plotly_chart(fig)
+
+
+
+# st.line_chart(data_new['ratio'].tail(2000))
+
     # Display the result dataframes and trade metrics
 # Plotting the 'ratio' and 'Zscore' columns
 plt.figure(figsize=(10, 6))
@@ -192,6 +311,8 @@ plt.grid(True)
 st.pyplot(plt)
 
 
+
+
 # Filter and print trades with positive entry Z-score
 positive_entry_trades = [result_df.drop(['average', 'stdev', 'entry', 'exit', 'holding_days'], axis=1) for result_df in result_dfs if result_df.iloc[0]['Zscore'] > 0]
 
@@ -205,6 +326,7 @@ else:
             st.subheader(f'Trade {i+1}')
             st.write(trade_df)
 
+
 # Filter and print trades with negative entry Z-score
 negative_entry_trades = [result_df.drop(['average', 'stdev', 'entry', 'exit', 'holding_days'], axis=1) for result_df in result_dfs if result_df.iloc[0]['Zscore'] < 0]
 
@@ -217,7 +339,6 @@ else:
         with st.container():
             st.subheader(f'Trade {i+1}')
             st.write(trade_df)
-
 
 
 
