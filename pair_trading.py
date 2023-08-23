@@ -60,9 +60,9 @@ st.write('Marzin Required:', margin_required)
 data = yf.download(stockA.strip(), start=start_date, end=end_date)['Adj Close']
 data2 = yf.download(stockB.strip(), start=start_date, end=end_date)['Adj Close']
 data_new = pd.concat([data, data2], axis=1, keys=['stockA', 'stockB'])
-data_new['ratio'] = np.log10(data_new['stockA'] / data_new['stockB'])
+data_new['ratio'] = (data_new['stockA'] / data_new['stockB']).round(2)
 data_new['average'] = data_new['ratio'].rolling(int(window_size)).mean()
-data_new['stdev'] = data_new['ratio'].rolling(int(window_size)).std()
+data_new['stdev'] = data_new['ratio'].rolling(int(window_size)).std(ddof=0)
 data_new['Zscore'] = (data_new['ratio'] - data_new['average']) / data_new['stdev']
 df = data_new.dropna()
 if entry_zscore > 0 :
