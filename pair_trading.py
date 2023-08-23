@@ -4,8 +4,10 @@ import numpy as np
 import yfinance as yf
 import streamlit as st
 import matplotlib.pyplot as plt
-from datetime import date,datetime
+from datetime import date,datetime,timedelta
 import plotly.express as px
+import requests
+from github_api import *
 
 st.set_page_config(layout="wide")
 
@@ -20,9 +22,16 @@ stockA = st.selectbox('Enter Stock A symbol (e.g., HDFC.NS):',stock)
 stockB = st.selectbox('Enter Stock B symbol (e.g., HDFCBANK.NS):',stock)
 # lotB = st.number_input('Enter lot size for this stock:')
 default_date = date(2010, 1, 1)
+default_end_date = date.today() + timedelta(days=1)
+
+# Calculate the default start date as 10 years ago from the default end date
+# default_start_date = default_end_date - timedelta(days=365 * 10)
 
 start_date = st.date_input('Enter Start Date:',value=default_date)
-end_date = st.date_input('Enter End Date:')
+current_date = datetime.now()
+
+end_date_limit = current_date - timedelta(days=365 * 20)
+end_date = st.date_input('Enter End Date:', min_value=current_date - timedelta(days=365 * 20), max_value=default_end_date)
 
 default_window_size = 100  # Default value for window size select slider
 default_entry_zscore = 3.0  # Default value for entry z-score slider
@@ -79,16 +88,19 @@ max_zscore_count_positive = df[(df['Zscore'] >= max_zscore - tolerance) & (df['Z
 max_negative_zscore_count = df[(df['Zscore'] >= max_negative_zscore - tolerance) & (df['Zscore'] <= max_negative_zscore + tolerance)].shape[0]
 
 
-def zscore(data,data2,window_size):
-    data_new1 = pd.DataFrame()
-    data_new1['ratio'] = np.log10(data / data2)
-    print(data_new1['ratio'])
-    data_new1['average'] = data_new1['ratio'].rolling(int(window_size)).mean()
-    data_new1['stdev'] = data_new1['ratio'].rolling(int(window_size)).std()
-    data_new1['Zscore'] = (data_new1['ratio'] - data_new1['average']) / data_new1['stdev']
-    last_z_score = data_new1['Zscore'].iloc[-1]
-    print(last_z_score,"last")
-    return last_z_score
+def zscore1(series,window):
+    return (series - series.rolling(window=window).mean()) / series.rolling(window=window).std()
+
+
+# def zscore(data,data2,window_size):
+#     print(data)
+#     data_new1 = pd.DataFrame()
+#     data_new1['ratio'] = np.log10(data / data2)
+#     data_new1['average'] = data_new1['ratio'].rolling(int(window_size)).mean()
+#     data_new1['stdev'] = data_new1['ratio'].rolling(int(window_size)).std()
+#     data_new1['Zscore'] = (data_new1['ratio'] - data_new1['average']) / data_new1['stdev']
+#     last_z_score = data_new1['Zscore'].iloc[-1]
+#     return last_z_score
 
 def correlation(df1,df2):
     corr_250d = (df1.tail(250)).corr(df2.tail(250))
@@ -101,16 +113,19 @@ def correlation(df1,df2):
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    live_zscore_60days = zscore(data,data2,60)
-    st.write('Live Zscore 60days', live_zscore_60days)
+    live_zscore_60days = zscore1(data_new['ratio'],60)
+    last_zscore_60 = live_zscore_60days[-1]
+    st.write('Live Zscore 60days', last_zscore_60)
 
 with col2:
-    live_zscore_100days = zscore(data,data2,100)
-    st.write('Live Zscore 100days', live_zscore_100days)
+    live_zscore_100days = zscore1(data_new['ratio'],100)
+    last_zscore_100 = live_zscore_100days[-1]
+    st.write('Live Zscore 100days', last_zscore_100)
 
 with col3:
-    live_zscore_250days = zscore(data,data2,250)
-    st.write('Live Zscore 250days', live_zscore_250days)
+    live_zscore_250days = zscore1(data_new['ratio'],250)
+    last_zscore_250 = live_zscore_250days[-1]
+    st.write('Live Zscore 250days', last_zscore_250)
 
 
 
@@ -129,7 +144,8 @@ with col3:
 col1, col2 = st.columns(2)  # You can also use st.columns(2) in newer versions of Streamlit
 
 
-
+# with col3:
+#     trade_stats_table = st.table(trade_stats_df.style.hide_index())
 
 # Display the max Z-score and its count on positive and negative sides
 with col1:
@@ -243,6 +259,26 @@ with st.container():
 
 
 
+# Create variables to store trade statistics
+total_trades = len(trade_metrics)  # Total number of trades
+winning_trades = sum(1 for trade in trade_metrics if float(trade['Total Profit']) > 0)  # Count of winning trades
+losing_trades = sum(1 for trade in trade_metrics if float(trade['Total Profit']) < 0)  # Count of losing trades
+winning_accuracy = (winning_trades / total_trades) * 100 if total_trades > 0 else 0  # Winning accuracy percentage
+
+new_trade_stats = {
+    'Total Trades': [total_trades],  # Update with your total_trades value
+    'Winning Trades': [winning_trades],  # Update with your winning_trades value
+    'Losing Trades': [losing_trades],  # Update with your losing_trades value
+    'Winning Accuracy (%)': [winning_accuracy],  # Update with your winning_accuracy value
+}
+
+trade_stats_df = pd.DataFrame(new_trade_stats)
+# Update the values in the trade statistics table
+col1,col2 = st.columns(2)
+with col1:
+    st.subheader('Trade Statistics')
+    st.table(trade_stats_df)
+
 # # Assuming you have two sets of data: data_new_2000 and data_new_5000
 # data_new_2000 = data_new['ratio'].tail(1250)
 # data_new_5000 = data_new['ratio'].tail(3750)
@@ -339,10 +375,3 @@ else:
         with st.container():
             st.subheader(f'Trade {i+1}')
             st.write(trade_df)
-
-
-
-# for i, result_df in enumerate(result_dfs):
-#     with st.container():
-#         st.subheader(f'Trade {i+1}')
-#         st.write(result_df.drop(['average','stdev','entry','exit','holding_days'], axis=1))
