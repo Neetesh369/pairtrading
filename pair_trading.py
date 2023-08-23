@@ -31,7 +31,7 @@ start_date = st.date_input('Enter Start Date:',value=default_date)
 current_date = datetime.now()
 
 end_date_limit = current_date - timedelta(days=365 * 20)
-end_date = st.date_input('Enter End Date:', min_value=current_date - timedelta(days=365 * 20), max_value=default_end_date)
+end_date = st.date_input('Enter End Date:', min_value=current_date - timedelta(days=365 * 20), max_value=default_end_date,value=default_end_date)
 
 default_window_size = 100  # Default value for window size select slider
 default_entry_zscore = 3.0  # Default value for entry z-score slider
