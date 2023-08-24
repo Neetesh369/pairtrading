@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from datetime import date,datetime,timedelta
 import plotly.express as px
 import requests
-from github_api import *
+# from github_api import *
 
 st.set_page_config(layout="wide")
 
