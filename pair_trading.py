@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from datetime import date,datetime,timedelta
 import plotly.express as px
 import requests
-# from github_api import *
+from github_api import *
 
 st.set_page_config(layout="wide")
 
@@ -57,10 +57,10 @@ margin_required = 500000
 st.write('Marzin Required:', margin_required)
 
 # Download stock data
-data = yf.download(stockA.strip(), start=start_date, end=end_date)['Adj Close']
-data2 = yf.download(stockB.strip(), start=start_date, end=end_date)['Adj Close']
+data = yf.download(stockA.strip(), start=start_date, end=end_date)['Close']
+data2 = yf.download(stockB.strip(), start=start_date, end=end_date)['Close']
 data_new = pd.concat([data, data2], axis=1, keys=['stockA', 'stockB'])
-data_new['ratio'] = (data_new['stockA'] / data_new['stockB']).round(2)
+data_new['ratio'] = (data_new['stockA'] / data_new['stockB']).round(4)
 data_new['average'] = data_new['ratio'].rolling(int(window_size)).mean()
 data_new['stdev'] = data_new['ratio'].rolling(int(window_size)).std(ddof=0)
 data_new['Zscore'] = (data_new['ratio'] - data_new['average']) / data_new['stdev']
@@ -375,3 +375,4 @@ else:
         with st.container():
             st.subheader(f'Trade {i+1}')
             st.write(trade_df)
+
