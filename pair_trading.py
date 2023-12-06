@@ -20,13 +20,17 @@ stockA = st.selectbox('Enter Stock A symbol (e.g., HDFC.NS):',stock)
 # lotA = st.number_input('Enter lot size for this stock:')
 
 stockB = st.selectbox('Enter Stock B symbol (e.g., HDFCBANK.NS):',stock)
+if stockA == "NIFTY_FIN_SERVICE.NS" or stockB == "NIFTY_FIN_SERVICE.NS":
+    default_date = date(2011, 9, 8)
+
+else:
 # lotB = st.number_input('Enter lot size for this stock:')
-default_date = date(2010, 1, 1)
+    default_date = date(2010, 1, 1)
 default_end_date = date.today() + timedelta(days=1)
 
 # Calculate the default start date as 10 years ago from the default end date
 # default_start_date = default_end_date - timedelta(days=365 * 10)
-
+print(default_date,"date")
 start_date = st.date_input('Enter Start Date:',value=default_date)
 current_date = datetime.now()
 
@@ -375,4 +379,3 @@ else:
         with st.container():
             st.subheader(f'Trade {i+1}')
             st.write(trade_df)
-
